@@ -6,6 +6,8 @@ Created on Dec 24, 2012
 go ahead and build the designerConv script in Python
 use MPI4py to get things going in super parallel
 
+NOTE: As you move forward, watch out for reshape() mishaps 
+found a big one early on with the mtx routine
 '''
 
 import numpy as np
@@ -19,9 +21,9 @@ class convOperator(object):
         q is the length of the filters 
         p is the number of filters '''
         
-        self.m = m
-        self.p = p
-        self.q = q
+        self.m = m # size of data
+        self.p = p # number of filters
+        self.q = q # length of filters
         self.n = self.m*self.p
         
         
@@ -35,12 +37,14 @@ class convOperator(object):
     def mtx(self,x):
         ''' multiplication operator '''
         assert(x.size == self.n)
-        xl = x.reshape(self.m,self.p)
-        
+        xl = x.reshape(self.m,self.p,order='F')
+        print 'xl shape ' + repr(xl.shape)
         y = np.zeros(self.m,x.dtype)
             
-        for ix in xrange(self.p):
-            y += np.convolve(xl[:,ix], self.w[:,ix].flatten(),'same')
+        slc = slice(self.q/2,self.q/2+self.m)
+        for ix in range(self.p):
+            tmp = np.convolve(xl[:,ix], self.w[:,ix].flatten())
+            y +=  tmp[slc]
         
         return y
             
@@ -50,7 +54,7 @@ class convOperator(object):
         assert(y.size==self.m)
         
         x = np.zeros(self.n,y.dtype)
-        print 'y type ' + repr(y.dtype)
+        # print 'y type ' + repr(y.dtype)
         
         for ix in range(self.p):
             slz = slice((ix*self.m),(ix*self.m)+self.m)
@@ -64,8 +68,7 @@ class convOperator(object):
         return self.mtxT(self.mtx(x))
 
 def test():
-    ''' test routine for matrices 
-    should implement a reciprocal, in place Transposed routine '''
+    ''' test routine to ensure 1-1 forward, transpose operation'''
     import scipy.linalg
     import matplotlib.pyplot as plt
     
@@ -114,8 +117,37 @@ def test():
     plt.show()
     
     return (yf,xf,ym,xm,yc,xc)
+
+def testMulti():
+    ''' test routine to make sure multiple filters work '''
+    import matplotlib.pyplot as plt
+    
+    ''' some test dimensions, small in size '''
+    p = 20
+    q = 10
+    m = 50
+    
+    ''' create the operator, initialize '''
+    A = convOperator(m,p,q)
+    w = np.random.randn(q,p)/np.sqrt(q)
+    A.changeWeights(w)
+    
+    '''create random x'''
+    x = np.random.randn(m*p)
     
     
+    ''' apply functional operator and its transpose '''
+    yf = A.mtx(x)
+    xf = A.mtxT(yf)
+    
+    plt.figure(1)
+    plt.subplot(2,1,1)
+    plt.plot(range(m), yf)
+    
+    plt.subplot(2,1,2)
+    plt.plot(range(m*p), x, range(m*p), xf)
+    
+    plt.show()
     
 if __name__ == '__main__':
     test()

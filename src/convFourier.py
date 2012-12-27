@@ -86,5 +86,36 @@ def test():
     xf = A.mtxT(yf)
     
     return x,yf,xf
+
+def testMulti():
+    ''' test routine to make sure multiple filters work '''
+    import matplotlib.pyplot as plt
+    
+    ''' some test dimensions, small in size '''
+    p = 20
+    q = 10
+    m = 50
+    
+    ''' create the operator, initialize '''
+    A = convFFT(m,p,q)
+    w = np.random.randn(q,p)/np.sqrt(q)
+    A.changeWeights(w)
+    
+    '''create random x'''
+    x = np.random.randn(m*(p+1)) + 1j*np.random.randn(m*(p+1))
+    
+    
+    ''' apply functional operator and its transpose '''
+    yf = A.mtx(x)
+    xf = A.mtxT(yf)
+    
+    plt.figure(1)
+    plt.subplot(2,1,1)
+    plt.plot(range(m), yf.real)
+    
+    plt.subplot(2,1,2)
+    plt.plot(range(m*(p+1)), x.real, range(m*(p+1)), xf.real)
+    
+    plt.show()
     
     
