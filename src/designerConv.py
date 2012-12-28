@@ -37,7 +37,7 @@ class convOperator(object):
             assert(w.shape[1] == self.p)
         self.w = w
         
-    def mtxPAR(self,x):
+    def mtx(self,x):
         ''' multiplication operator '''
         tm = time.time()
         assert(x.size == self.n)
@@ -47,15 +47,15 @@ class convOperator(object):
             
         slc = slice(self.q/2,self.q/2+self.m)
         
-        g = self.pool.imap_unordered(mapFFTConv, zip(xl.T,self.w.T) )
+        g = self.pool.imap_unordered(mapFFTConv, zip(xl.T,self.w.T), chunksize=10 )
 #        y = g.get()
         
         y = sum(g)
         
-        print 'eval time = ' + repr(time.time()-tm)
+        print 'par eval time = ' + repr(time.time()-tm)
         return y[slc]
             
-    def mtx(self,x):
+    def mtxPAR(self,x):
         ''' multiplication operator '''
         tm = time.time()
         assert(x.size == self.n)
