@@ -105,7 +105,7 @@ def getData(m,rank=0):
     returns zero mean, normalized data sample
     '''
     
-    import matplotlib.pyplot as plt
+#    import matplotlib.pyplot as plt
     
     D = spio.loadmat('../data/plmr.mat')
     
@@ -116,9 +116,9 @@ def getData(m,rank=0):
     y = y - np.mean(y)
     y = y/np.linalg.norm(y)
     
-    plt.figure(200)
-    plt.plot(y.real)
-    plt.show()
+#    plt.figure(200)
+#    plt.plot(y.real)
+#    plt.show()
     
     print 'shape of y ' + repr(y.shape)
     return y
