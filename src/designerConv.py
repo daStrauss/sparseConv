@@ -16,6 +16,12 @@ import multiprocessing
 import time
 from mpi4py import MPI
 
+class mapFFTConv(object):
+    def __init__(self,slz):
+        self.slz = slz
+    def __call__(self,a):
+        tmp = sig.fftconvolve(a[0],a[1])
+        return tmp[self.slz]
 
 
 class convOperator(object):
@@ -40,24 +46,6 @@ class convOperator(object):
             assert(w.shape[1] == self.p)
         self.w = w
         
-    def mtx(self,x):
-        ''' multiplication operator '''
-        tm = time.time()
-        assert(x.size == self.n)
-        xl = x.reshape(self.m,self.p,order='F')
-#        print 'xl shape ' + repr(xl.shape)
-#        y = np.zeros(self.m,x.dtype)
-            
-        slc = slice(self.q/2,self.q/2+self.m)
-        
-        g = self.pool.map_async(mapFFTConv, zip(xl.T,self.w.T), chunksize=10 )
-        y = g.get()
-        
-        y = sum(y)
-        
-        print 'par eval time = ' + repr(time.time()-tm)
-        return y[slc]
-            
     def mtxPAR(self,x):
         ''' multiplication operator '''
         tm = time.time()
@@ -67,11 +55,30 @@ class convOperator(object):
 #        y = np.zeros(self.m,x.dtype)
             
         slc = slice(self.q/2,self.q/2+self.m)
-
-        y = map(mapFFTConv, zip(xl.T,self.w.T))
+        mpx = mapFFTConv(slc)
+        
+        g = self.pool.map_async(mpx, zip(xl.T,self.w.T), chunksize=10 )
+        y = g.get()
+        
+        y = sum(y)
+        
+        print 'par eval time = ' + repr(time.time()-tm)
+        return y
+            
+    def mtx(self,x):
+        ''' multiplication operator '''
+        tm = time.time()
+        assert(x.size == self.n)
+        xl = x.reshape(self.m,self.p,order='F')
+#        print 'xl shape ' + repr(xl.shape)
+#        y = np.zeros(self.m,x.dtype)
+            
+        slc = slice(self.q/2,self.q/2+self.m)
+        mpx = mapFFTConv(slc)
+        y = map(mpx, zip(xl.T,self.w.T))
         y = sum(y)
         print 'eval time ' + repr(time.time()-tm)
-        return y[slc]
+        return y
     
     def mtxT(self,y):
         ''' adjoint multiplication operator '''
@@ -105,9 +112,6 @@ class convOperator(object):
         ''' haha! cg call for a function called matvec, I can simply overload it
         and return AtA haha '''
         return self.mtxT(self.mtx(x))
-
-def mapFFTConv(a):
-    return sig.fftconvolve(a[0],a[1])
     
 
 def test():
@@ -173,7 +177,7 @@ def testMulti():
     ''' some test dimensions, small in size '''
     p = 200
     q = 100
-    m = 15000
+    m = 100000
     
     ''' create the operator, initialize '''
     A = convOperator(m,p,q)

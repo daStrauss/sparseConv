@@ -24,14 +24,14 @@ def main():
     nProc = comm.Get_size()
     
     
-    m = 15000 # size of data
-    p = 200 # number of filters
-    q = 100 # length of filters
+    m = 50000 # size of data
+    p = 100 # number of filters
+    q = 200 # length of filters
     
     rho = 5.0
     lmb = 1e-3
     xi = 0.5
-    
+    fac = np.sqrt((m/q)/2.0)
     ''' initialize MPI routine '''
     
     
@@ -43,11 +43,11 @@ def main():
 #    D = spio.loadmat('fakew.mat')
 #    wt = D['w']
     wt = np.random.randn(q,p)*0.05 #D['w']
-    A = convFFT(m,p,q)
+    A = convFFT(m,p,q,fct=fac)
     
     optl1 = lasso(m,m*(p+1),rho,lmb)
     
-    newWW = weightsUpdate.weightsUpdate(m,p,q,xi)
+    newWW = weightsUpdate.weightsUpdate(m,p,q,xi,fct=fac)
     newWW.wp = wt
     
     rrz = list()
