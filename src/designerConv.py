@@ -75,6 +75,7 @@ class convOperator(object):
     
     def mtxT(self,y):
         ''' adjoint multiplication operator '''
+        tm = time.time()
         assert(y.size==self.m)
         
         x = np.zeros(self.n,y.dtype)
@@ -83,7 +84,8 @@ class convOperator(object):
         for ix in range(self.p):
             slz = slice((ix*self.m),(ix*self.m)+self.m)
             x[slz] = sig.fftconvolve(y,np.flipud(self.w[:,ix].flatten()),'same')
-               
+        
+        print 'tpx time ' + repr(time.time()-tm)
         return x
     
     def mtxTPar(self,y):
