@@ -163,7 +163,7 @@ def test():
 
 def testMulti():
     ''' test routine to make sure multiple filters work '''
-    import matplotlib.pyplot as plt
+#    import matplotlib.pyplot as plt
     comm = MPI.COMM_WORLD
     rk = comm.Get_rank()
     nProc = comm.Get_size()
@@ -191,14 +191,14 @@ def testMulti():
     print 'par time ' + repr(time.time()-tm)
     xf = A.mtxT(yf)
     
-    plt.figure(1)
-    plt.subplot(2,1,1)
-    plt.plot(range(m), yf, range(m), yp)
-    
-    plt.subplot(2,1,2)
-    plt.plot(range(m*p), x, range(m*p), xf)
-    
-    plt.show()
+#    plt.figure(1)
+#    plt.subplot(2,1,1)
+#    plt.plot(range(m), yf, range(m), yp)
+#    
+#    plt.subplot(2,1,2)
+#    plt.plot(range(m*p), x, range(m*p), xf)
+#    
+#    plt.show()
     
 if __name__ == '__main__':
     testMulti()
