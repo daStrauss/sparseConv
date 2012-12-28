@@ -12,24 +12,23 @@ import numpy as np
 
 class weightsUpdate(object):
     ''' class that implements methods for updating weights '''
-    def __init__(self,m,p,q,rho):
+    def __init__(self,m,p,q,xi,fct=1.0):
         self.p = p
         self.q = q
         self.m = m
         self.n = self.q*self.p
-        self.rho = rho
+        self.xi = xi
         self.wp = np.zeros((q,p))
         self.wd = np.zeros((q,p))
+        self.fct = fct
         
     def updatePlain(self,y,wt,z):
         ''' update for weights '''
         self.wd = self.wd + (self.wp-wt);
         self.zm = z.reshape(self.m,self.p,order='F')
-        
-        
+
         M = self.makeCGM()
-        
-        b = self.mtxT(y) + self.rho*(wt.flatten(order='F')-self.wd.flatten(order='F'))
+        b = self.mtxT(y) + self.xi*(wt.flatten(order='F')-self.wd.flatten(order='F'))
 
         ss,info = lin.cg(M,b,tol=1e-6)
         print 'CG info: ' + repr(info)
@@ -68,12 +67,26 @@ class weightsUpdate(object):
         return x
                 
         
-    def updateFourier(self,y,w,z):
+    def updateFourier(self,y,wt,z):
         '''update method for when there are fourier modes too '''
-    
+        self.wd = self.wd + (self.wp-wt);
+        self.zm = z[:(self.m*self.p)].reshape(self.m,self.p,order='F')
+        zf = z[(self.m*self.p):]
+        
+        M = self.makeCGM()
+        b = self.mtxT(y - (self.fct/np.sqrt(self.m))*np.fft.fft(zf)) + self.xi*(wt.flatten(order='F')-self.wd.flatten(order='F'))
+
+        ss,info = lin.cg(M,b,tol=1e-6)
+        print 'CG info: ' + repr(info)
+        
+        w = ss.real.reshape(self.q,self.p,order='F') 
+
+        self.wp = w
+        return (w+self.wd)
+
     
 
     def makeCGM(self):
         ''' make linear operator with AtA '''
-        return lin.LinearOperator((self.p*self.q,self.p*self.q), lambda x: self.rho*x + self.mtxT(self.mtx(x)), \
+        return lin.LinearOperator((self.p*self.q,self.p*self.q), lambda x: self.xi*x + self.mtxT(self.mtx(x)), \
                                     dtype='complex128')

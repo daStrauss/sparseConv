@@ -9,40 +9,66 @@ creating some routines to make a convolutional net. especially one that works in
 
 import scipy.io as spio
 import numpy as np
-from designerConv import convOperator
+from convFourier import convFFT
 from lassoUpdate import lasso
 import weightsUpdate
+from time import time
+from mpi4py import MPI
+
+
 
 def main():
     ''' main routine '''
-    m = 100000 # size of data
-    p = 128 # number of filters
-    q = 64 # length of filters
+    comm = MPI.COMM_WORLD
+    rk = comm.Get_rank()
+    nProc = comm.Get_size()
+    
+    
+    m = 15000 # size of data
+    p = 200 # number of filters
+    q = 100 # length of filters
     
     rho = 5.0
     lmb = 1e-3
+    xi = 0.5
     
     ''' initialize MPI routine '''
     
     
     ''' load data, given rank '''
-    y = getData(m)
+    y = getData(m,rank=rk)
 
     
     ''' initialize weights '''
-    D = spio.loadmat('fakew.mat') 
+#    D = spio.loadmat('fakew.mat')
+#    wt = D['w']
     wt = np.random.randn(q,p)*0.05 #D['w']
-    A = convOperator(m,p,q)
+    A = convFFT(m,p,q)
     
-    optl1 = lasso(m,m*p,rho,lmb)
-    newWW = weightsUpdate.weightsUpdate(m,p,q,0.5)
+    optl1 = lasso(m,m*(p+1),rho,lmb)
     
+    newWW = weightsUpdate.weightsUpdate(m,p,q,xi)
+    newWW.wp = wt
+    
+    rrz = list()
+    gap = list()
     ''' begin loop '''
     for itz in range(1):
-        A.changeWeights(wt)
+        A.changeWeights(newWW.wp)
+        tm = time()
         z = optl1.solveL1(y, A)
-        wmx = newWW.updatePlain(y, wt, z)
-        wt = weightAgg(wmx,p,q)
+        rrz.append(optl1.rrz.pop())
+        gap.append(optl1.gap.pop())
+        print 'solved l1 itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
+        tm = time()
+        wmx = newWW.updateFourier(y, wt, z)
+        print 'solved w update itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
+        tm = time()
+        wt = weightAgg(wmx,p,q,comm)
+        print 'have new weights itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
+    
+    outd = {'y':y, 'z':z, 'wt':wt,'m':m,'p':p,'q':q, 'rho':rho,'lmb':lmb, 'xi':xi, 'rrz':rrz,'gap':gap }
+    spio.savemat('testout_' + repr(nProc) + '_' + repr(rk), outd) 
     
     return y,z,optl1,A,wt
     
@@ -53,8 +79,15 @@ def main():
     ''' all reduce '''
     
     
-def weightAgg(wmx,p,q):
+def weightAgg(U,p,q,comm):
     ''' aggregation for weights '''
+    
+    wmx = np.zeros((q,p))
+    
+    wmx = comm.allreduce(U,wmx,op=MPI.SUM)
+    
+    wmx = wmx/comm.Get_size()
+    
     wt = np.zeros((q,p))
     
     for ix in xrange(p):
@@ -77,7 +110,7 @@ def getData(m,rank=0):
     D = spio.loadmat('../data/plmr.mat')
     
     # upb = D['fs'].size - m-1
-    cix = 1000 # np.random.random_integers(0,upb,1)
+    cix = 1000 + rank*m # np.random.random_integers(0,upb,1)
     slz = slice(cix,cix+m)
     y = D['fs'][slz].astype('complex128').flatten()
     y = y - np.mean(y)
@@ -101,13 +134,16 @@ def testMain():
     plt.plot(z.real)
     
     plt.figure(11)
-    plt.plot(range(1000),y, range(1000), A.mtx(z).real)
+    plt.plot(range(y.size),y, range(y.size), A.mtx(z).real)
     
     plt.figure(12)
-    plt.plot(range(50),w[:,0], range(50),wt[:,0])
+    plt.plot(range(w.shape[0]),w[:,0], range(wt.shape[0]),wt[:,0])
     
     return y,z,optl1,A,wt,w
     
+    
+if __name__ == '__main__':
+    main()
     
     
     

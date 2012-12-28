@@ -11,6 +11,9 @@ found a big one early on with the mtx routine
 '''
 
 import numpy as np
+import scipy.signal as sig
+import multiprocessing
+import time
 
 class convOperator(object):
     ''' a class to make the convolutional matrix '''
@@ -25,7 +28,7 @@ class convOperator(object):
         self.p = p # number of filters
         self.q = q # length of filters
         self.n = self.m*self.p
-        
+        self.pool = multiprocessing.Pool(processes=multiprocessing.cpu_count()*2)
         
     def changeWeights(self,w):
         ''' reset internal weights '''
@@ -36,18 +39,36 @@ class convOperator(object):
         
     def mtx(self,x):
         ''' multiplication operator '''
+        tm = time.time()
         assert(x.size == self.n)
         xl = x.reshape(self.m,self.p,order='F')
-        print 'xl shape ' + repr(xl.shape)
-        y = np.zeros(self.m,x.dtype)
+#        print 'xl shape ' + repr(xl.shape)
+#        y = np.zeros(self.m,x.dtype)
             
         slc = slice(self.q/2,self.q/2+self.m)
-        for ix in range(self.p):
-            tmp = np.convolve(xl[:,ix], self.w[:,ix].flatten())
-            y +=  tmp[slc]
         
-        return y
+        g = self.pool.imap_unordered(mapFFTConv, zip(xl.T,self.w.T) )
+#        y = g.get()
+        
+        y = sum(g)
+        
+        print 'eval time = ' + repr(time.time()-tm)
+        return y[slc]
             
+    def mtxPAR(self,x):
+        ''' multiplication operator '''
+        tm = time.time()
+        assert(x.size == self.n)
+        xl = x.reshape(self.m,self.p,order='F')
+#        print 'xl shape ' + repr(xl.shape)
+#        y = np.zeros(self.m,x.dtype)
+            
+        slc = slice(self.q/2,self.q/2+self.m)
+
+        y = map(mapFFTConv, zip(xl.T,self.w.T))
+        y = sum(y)
+        print 'eval time ' + repr(time.time()-tm)
+        return y[slc]
     
     def mtxT(self,y):
         ''' adjoint multiplication operator '''
@@ -58,7 +79,20 @@ class convOperator(object):
         
         for ix in range(self.p):
             slz = slice((ix*self.m),(ix*self.m)+self.m)
-            x[slz] = np.convolve(y,np.flipud(self.w[:,ix].flatten()),'same')
+            x[slz] = sig.fftconvolve(y,np.flipud(self.w[:,ix].flatten()),'same')
+               
+        return x
+    
+    def mtxTPar(self,y):
+        ''' adjoint multiplication operator '''
+        assert(y.size==self.m)
+        
+        x = np.zeros(self.n,y.dtype)
+        # print 'y type ' + repr(y.dtype)
+        
+        for ix in range(self.p):
+            slz = slice((ix*self.m),(ix*self.m)+self.m)
+            x[slz] = sig.fftconvolve(y,np.flipud(self.w[:,ix].flatten()),'same')
                
         return x
         
@@ -66,6 +100,10 @@ class convOperator(object):
         ''' haha! cg call for a function called matvec, I can simply overload it
         and return AtA haha '''
         return self.mtxT(self.mtx(x))
+
+def mapFFTConv(a):
+    return sig.fftconvolve(a[0],a[1])
+    
 
 def test():
     ''' test routine to ensure 1-1 forward, transpose operation'''
@@ -88,6 +126,8 @@ def test():
     
     ''' apply functional operator and its transpose '''
     yf = A.mtx(x)
+    print yf
+    
     xf = A.mtxT(yf)
     
     ''' build the convmtx() version '''
@@ -123,9 +163,9 @@ def testMulti():
     import matplotlib.pyplot as plt
     
     ''' some test dimensions, small in size '''
-    p = 20
-    q = 10
-    m = 50
+    p = 200
+    q = 100
+    m = 15000
     
     ''' create the operator, initialize '''
     A = convOperator(m,p,q)
@@ -137,12 +177,17 @@ def testMulti():
     
     
     ''' apply functional operator and its transpose '''
+    tm = time.time()
     yf = A.mtx(x)
+    print 'single itme ' + repr(time.time()-tm)
+    tm = time.time()
+    yp = A.mtxPAR(x)
+    print 'par time ' + repr(time.time()-tm)
     xf = A.mtxT(yf)
     
     plt.figure(1)
     plt.subplot(2,1,1)
-    plt.plot(range(m), yf)
+    plt.plot(range(m), yf, range(m), yp)
     
     plt.subplot(2,1,2)
     plt.plot(range(m*p), x, range(m*p), xf)
@@ -150,4 +195,4 @@ def testMulti():
     plt.show()
     
 if __name__ == '__main__':
-    test()
+    testMulti()

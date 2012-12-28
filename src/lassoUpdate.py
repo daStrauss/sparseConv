@@ -42,7 +42,7 @@ class lasso(object):
             
             ss,info = lin.cg(M,A.mtx(b),tol=1e-6,maxiter=20)
             
-            print 'local iter: ' + repr(itz) + ' converge info: ' + repr(info)
+#            print 'local iter: ' + repr(itz) + ' converge info: ' + repr(info)
             self.zp = b/self.rho - (1.0/(self.rho**2))*(A.mtxT(ss))
             
             

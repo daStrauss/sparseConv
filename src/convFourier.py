@@ -22,7 +22,7 @@ class convFFT(object):
         self.p = p
         self.q = q
         self.W = cvOp(m,p,q)
-        self.fct = 1.0
+        self.fct = fct
         
         self.n = self.m*self.p+self.m # need to add one in order to get true dimensions
         
@@ -38,7 +38,7 @@ class convFFT(object):
         y = self.W.mtx(x[:(self.m*self.p)]).astype('complex128')
         
         slz = slice(self.m*self.p,self.m*self.p + self.m) 
-        y += (1.0/np.sqrt(self.m))*np.fft.fft(x[slz])
+        y += (self.fct/np.sqrt(self.m))*np.fft.fft(x[slz])
                 
         return y
             
@@ -52,7 +52,7 @@ class convFFT(object):
         x[slz] = self.W.mtxT(y)
         
         slz = slice(self.m*self.p,self.m*(self.p+1))
-        x[slz] = np.sqrt(self.m)*np.fft.ifft(y)
+        x[slz] = np.sqrt(self.m)*np.fft.ifft(y)/self.fct
     
         return x
     
