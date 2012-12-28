@@ -14,6 +14,9 @@ import numpy as np
 import scipy.signal as sig
 import multiprocessing
 import time
+from mpi4py import MPI
+
+
 
 class convOperator(object):
     ''' a class to make the convolutional matrix '''
@@ -161,6 +164,9 @@ def test():
 def testMulti():
     ''' test routine to make sure multiple filters work '''
     import matplotlib.pyplot as plt
+    comm = MPI.COMM_WORLD
+    rk = comm.Get_rank()
+    nProc = comm.Get_size()
     
     ''' some test dimensions, small in size '''
     p = 200
