@@ -24,7 +24,7 @@ def main():
     nProc = comm.Get_size()
     
     
-    m = 50000 # size of data
+    m = 60000 # size of data
     p = 100 # number of filters
     q = 200 # length of filters
     
