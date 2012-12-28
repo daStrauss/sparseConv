@@ -37,7 +37,7 @@ class convOperator(object):
             assert(w.shape[1] == self.p)
         self.w = w
         
-    def mtx(self,x):
+    def mtxPAR(self,x):
         ''' multiplication operator '''
         tm = time.time()
         assert(x.size == self.n)
@@ -55,7 +55,7 @@ class convOperator(object):
         print 'eval time = ' + repr(time.time()-tm)
         return y[slc]
             
-    def mtxPAR(self,x):
+    def mtx(self,x):
         ''' multiplication operator '''
         tm = time.time()
         assert(x.size == self.n)
