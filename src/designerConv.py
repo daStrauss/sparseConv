@@ -62,7 +62,7 @@ class convOperator(object):
         
         y = sum(y)
         
-        print 'par eval time = ' + repr(time.time()-tm)
+        # print 'par eval time = ' + repr(time.time()-tm)
         return y
             
     def mtx(self,x):
@@ -77,7 +77,7 @@ class convOperator(object):
         mpx = mapFFTConv(slc)
         y = map(mpx, zip(xl.T,self.w.T))
         y = sum(y)
-        print 'eval time ' + repr(time.time()-tm)
+        # print 'eval time ' + repr(time.time()-tm)
         return y
     
     def mtxT(self,y):
@@ -92,7 +92,7 @@ class convOperator(object):
             slz = slice((ix*self.m),(ix*self.m)+self.m)
             x[slz] = sig.fftconvolve(y,np.flipud(self.w[:,ix].flatten()),'same')
         
-        print 'tpx time ' + repr(time.time()-tm)
+        # print 'tpx time ' + repr(time.time()-tm)
         return x
     
     def mtxTPar(self,y):

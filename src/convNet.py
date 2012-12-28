@@ -53,7 +53,7 @@ def main():
     rrz = list()
     gap = list()
     ''' begin loop '''
-    for itz in range(1):
+    for itz in range(10):
         A.changeWeights(newWW.wp)
         tm = time()
         z = optl1.solveL1(y, A)
@@ -66,9 +66,8 @@ def main():
         tm = time()
         wt = weightAgg(wmx,p,q,comm)
         print 'have new weights itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
-    
-    outd = {'y':y, 'z':z, 'wt':wt,'m':m,'p':p,'q':q, 'rho':rho,'lmb':lmb, 'xi':xi, 'rrz':rrz,'gap':gap }
-    spio.savemat('testout_' + repr(nProc) + '_' + repr(rk), outd) 
+        outd = {'y':y, 'z':z, 'wt':wt,'m':m,'p':p,'q':q, 'rho':rho,'lmb':lmb, 'xi':xi, 'rrz':rrz,'gap':gap }
+        spio.savemat('testout_' + repr(itz) + '_' + repr(nProc) + '_' + repr(rk), outd) 
     
     return y,z,optl1,A,wt
     
