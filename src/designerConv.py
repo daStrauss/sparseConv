@@ -50,10 +50,10 @@ class convOperator(object):
             
         slc = slice(self.q/2,self.q/2+self.m)
         
-        g = self.pool.imap_unordered(mapFFTConv, zip(xl.T,self.w.T), chunksize=10 )
-#        y = g.get()
+        g = self.pool.map_async(mapFFTConv, zip(xl.T,self.w.T), chunksize=10 )
+        y = g.get()
         
-        y = sum(g)
+        y = sum(y)
         
         print 'par eval time = ' + repr(time.time()-tm)
         return y[slc]
