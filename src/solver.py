@@ -5,7 +5,7 @@ Created on Dec 29, 2012
 '''
 
 import numpy as np
-import matplotlib.pyplot as plt
+
 
 def cg(A,b,maxiter=30,tol=1e-6,pll=False):
     x = np.zeros(b.size,dtype=b.dtype)
@@ -32,6 +32,7 @@ def cg(A,b,maxiter=30,tol=1e-6,pll=False):
         rsold=rsnew;
 
     if pll:
+        import matplotlib.pyplot as plt
         plt.figure(1)
         plt.plot(rsn)
         plt.title('rsn')
