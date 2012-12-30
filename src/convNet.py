@@ -24,13 +24,13 @@ def main():
     nProc = comm.Get_size()
     
     
-    m = 60000 # size of data
-    p = 100 # number of filters
-    q = 200 # length of filters
+    m = 5000 # size of data
+    p = 50 # number of filters
+    q = 300 # length of filters
     
     rho = 5.0
-    lmb = 1e-3
-    xi = 0.5
+    lmb = 0.5e-3
+    xi = 0.2
     fac = np.sqrt((m/q)/2.0)
     ''' initialize MPI routine '''
     
@@ -40,9 +40,9 @@ def main():
 
     
     ''' initialize weights '''
-#    D = spio.loadmat('fakew.mat')
-#    wt = D['w']
-    wt = np.random.randn(q,p)*0.05 #D['w']
+    D = spio.loadmat('fakew.mat')
+    wt = D['wini']
+#    wt = np.random.randn(q,p)/np.sqrt(q) #D['w']
     A = convFFT(m,p,q,fct=fac)
     
     optl1 = lasso(m,m*(p+1),rho,lmb)
@@ -54,20 +54,23 @@ def main():
     gap = list()
     ''' begin loop '''
     for itz in range(10):
+        ws = newWW.wp
         A.changeWeights(newWW.wp)
         tm = time()
         z = optl1.solveL1(y, A)
-        rrz.append(optl1.rrz.pop())
-        gap.append(optl1.gap.pop())
-        print 'solved l1 itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
+        rrz = optl1.rrz # .append(optl1.rrz.pop())
+        gap = optl1.gap #.append(optl1.gap.pop())
+        print 'rank ' + repr(rk) + ' of ' + repr(nProc) +  ' solved l1 itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
         tm = time()
+        
         wmx = newWW.updateFourier(y, wt, z)
-        print 'solved w update itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
+        print 'rank ' + repr(rk) + ' of ' + repr(nProc) +  ' solved w update itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
         tm = time()
         wt = weightAgg(wmx,p,q,comm)
-        print 'have new weights itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
-        outd = {'y':y, 'z':z, 'wt':wt,'m':m,'p':p,'q':q, 'rho':rho,'lmb':lmb, 'xi':xi, 'rrz':rrz,'gap':gap }
-        spio.savemat('testout_' + repr(itz) + '_' + repr(nProc) + '_' + repr(rk), outd) 
+        wp = newWW.wp
+        print 'rank ' + repr(rk) + ' of ' + repr(nProc) +  ' have new weights itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
+        outd = {'y':y, 'z':z, 'wt':wt,'wp':wp,'m':m,'p':p,'q':q, 'rho':rho,'lmb':lmb, 'xi':xi, 'rrz':rrz,'gap':gap, 'ws':ws }
+        spio.savemat('miniout_' + repr(itz) + '_' + repr(nProc) + '_' + repr(rk), outd) 
     
     return y,z,optl1,A,wt
     

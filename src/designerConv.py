@@ -37,7 +37,7 @@ class convOperator(object):
         self.p = p # number of filters
         self.q = q # length of filters
         self.n = self.m*self.p
-        self.pool = multiprocessing.Pool(processes=10)
+        # self.pool = multiprocessing.Pool(processes=10)
         
     def changeWeights(self,w):
         ''' reset internal weights '''
