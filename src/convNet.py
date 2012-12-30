@@ -14,7 +14,8 @@ from lassoUpdate import lasso
 import weightsUpdate
 from time import time
 from mpi4py import MPI
-
+import sys
+from designerConv import convOperator
 
 
 def main():
@@ -23,8 +24,13 @@ def main():
     rk = comm.Get_rank()
     nProc = comm.Get_size()
     
-    
-    m = 5000 # size of data
+    plain = True
+    if len(sys.argv) == 2:
+        if sys.argv[1] == 'plain':
+            plain = False
+        
+        
+    m = 50000 # size of data
     p = 50 # number of filters
     q = 300 # length of filters
     
@@ -43,10 +49,17 @@ def main():
     D = spio.loadmat('fakew.mat')
     wt = D['wini']
 #    wt = np.random.randn(q,p)/np.sqrt(q) #D['w']
-    A = convFFT(m,p,q,fct=fac)
-    
-    optl1 = lasso(m,m*(p+1),rho,lmb)
-    
+
+    if plain:
+        A = convFFT(m,p,q,fct=fac)
+        optl1 = lasso(m,m*(p+1),rho,lmb)
+        
+    else:
+        print 'Doing plain!'
+        A = convOperator(m,p,q)
+        optl1 = lasso(m,m*(p),rho,lmb)
+        
+        
     newWW = weightsUpdate.weightsUpdate(m,p,q,xi,fct=fac)
     newWW.wp = wt
     
@@ -63,14 +76,22 @@ def main():
         print 'rank ' + repr(rk) + ' of ' + repr(nProc) +  ' solved l1 itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
         tm = time()
         
-        wmx = newWW.updateFourier(y, wt, z)
+        if plain:
+            wmx = newWW.updateFourier(y, wt, z)
+        else:
+            wmx = newWW.updatePlain(y, wt, z)
+            
         print 'rank ' + repr(rk) + ' of ' + repr(nProc) +  ' solved w update itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
         tm = time()
         wt = weightAgg(wmx,p,q,comm)
         wp = newWW.wp
         print 'rank ' + repr(rk) + ' of ' + repr(nProc) +  ' have new weights itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
         outd = {'y':y, 'z':z, 'wt':wt,'wp':wp,'m':m,'p':p,'q':q, 'rho':rho,'lmb':lmb, 'xi':xi, 'rrz':rrz,'gap':gap, 'ws':ws }
-        spio.savemat('miniout_' + repr(itz) + '_' + repr(nProc) + '_' + repr(rk), outd) 
+        
+        if plain:
+            spio.savemat('miniOut_' + repr(itz) + '_' + repr(nProc) + '_' + repr(rk), outd) 
+        else:
+            spio.savemat('plainOut_' + repr(itz) + '_' + repr(nProc) + '_' + repr(rk), outd) 
     
     return y,z,optl1,A,wt
     

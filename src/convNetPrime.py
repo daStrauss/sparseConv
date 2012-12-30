@@ -22,12 +22,12 @@ def main():
     
     
     m = 60000 # size of data
-    p = 100 # number of filters
-    q = 200 # length of filters
+    p = 50 # number of filters
+    q = 300 # length of filters
     
     rho = 5.0
     lmb = 1e-3
-    xi = 0.5
+    xi = 0.2
     fac = np.sqrt((m/q)/2.0)
     ''' initialize MPI routine '''
     
