@@ -1,2 +1,1 @@
-mpiexec -n 36 -wdir /shared/users/dstrauss/sparseConv/src/ python convNet.py 
-mpiexec -n 36 -wdir /shared/users/dstrauss/sparseConv/src/ python convNet.py plain
+mpiexec -n 60 -wdir /shared/users/dstrauss/sparseConv/src/ python convNet.py 
