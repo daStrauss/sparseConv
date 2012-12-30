@@ -46,10 +46,12 @@ def main():
 
     
     ''' initialize weights '''
-    D = spio.loadmat('fakew.mat')
-    wt = D['wini']
-#    wt = np.random.randn(q,p)/np.sqrt(q) #D['w']
-
+    # D = spio.loadmat('fakew.mat')
+    # wt = D['wini']
+    wt = np.random.randn(q,p)/np.sqrt(q) #D['w']
+    
+    wt = weightAgg(wt,p,q,comm)
+    
     if plain:
         A = convFFT(m,p,q,fct=fac)
         optl1 = lasso(m,m*(p+1),rho,lmb)
