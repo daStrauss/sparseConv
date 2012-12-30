@@ -32,7 +32,7 @@ class weightsUpdate(object):
         M = self.makeCGM()
         b = self.mtxT(y) + self.xi*(wt.flatten(order='F')-self.wd.flatten(order='F'))
 
-        ss,info = solver.cg(M,b,tol=1e-6,maxiter=30,pll=True)
+        ss,info = solver.cg(M,b,tol=1e-6,maxiter=30,pll=False)
         print 'CG info: ' + repr(info)
         
         w = ss.real.reshape(self.q,self.p,order='F') 

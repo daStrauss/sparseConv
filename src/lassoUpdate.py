@@ -31,7 +31,7 @@ class lasso(object):
         where A is a designerConv/convFourier object with mtx, mtxT routines 
         '''
         zt = np.zeros(self.n,dtype='complex128')
-#        zd = np.zeros(self.n,dtype='complex128')
+        self.zd = np.zeros(self.n,dtype='complex128')
         
         Atb = A.mtxT(y);
         M = invOp(A,self.rho,self.m)
