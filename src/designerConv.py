@@ -38,6 +38,8 @@ class convOperator(object):
         self.q = q # length of filters
         self.n = self.m*self.p
         # self.pool = multiprocessing.Pool(processes=10)
+        self.np2 = (np.floor(np.log2(self.m+self.p))+1).astype('int64')
+        print self.np2
         
     def changeWeights(self,w):
         ''' reset internal weights '''
@@ -45,6 +47,8 @@ class convOperator(object):
         if self.p > 1:
             assert(w.shape[1] == self.p)
         self.w = w
+        
+        self.wtf = np.fft.fft(self.w.T,2**self.np2)
         
     def mtxPAR(self,x):
         ''' multiplication operator '''
@@ -85,8 +89,8 @@ class convOperator(object):
         assert(x.size == self.n)
         xl = x.reshape(self.m,self.p,order='F')
         slc = slice(self.q/2,self.q/2+self.m)
-        t = np.sum(np.fft.ifft(np.fft.fft(xl.T,2**16)*np.fft.fft(self.w.T,2**16))[:,slc],0)
-        
+        t = np.sum(np.fft.ifft(np.fft.fft(xl.T,2**self.np2)*self.wtf)[:,slc],0)
+        print 'internal trx time ' +repr(time.time()-tm)
         return t
             
     def mtxT(self,y):
@@ -204,7 +208,10 @@ def testMulti():
     tm = time.time()
     yp = A.mtxTRX(x)
     print 'par time ' + repr(time.time()-tm)
+    
+    tm = time.time()
     xf = A.mtxT(yf)
+    print 'transpose time ' + repr(time.time()-tm)
     
     print 'yf s ' + repr(yf.shape)
     print 'yp s ' + repr(yp.shape)
