@@ -84,10 +84,10 @@ class convOperator(object):
         tm = time.time()
         assert(x.size == self.n)
         xl = x.reshape(self.m,self.p,order='F')
-        
-        t = sum(np.fft.fft(xl.T,self.m+self.q)*np.fft.fft(self.w.T,self.m+self.q))
         slc = slice(self.q/2,self.q/2+self.m)
-        return np.fft.ifft(t)[slc].real
+        t = np.sum(np.fft.ifft(np.fft.fft(xl.T,2**16)*np.fft.fft(self.w.T,2**16))[:,slc],0)
+        
+        return t
             
     def mtxT(self,y):
         ''' adjoint multiplication operator '''
