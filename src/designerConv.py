@@ -85,8 +85,9 @@ class convOperator(object):
         assert(x.size == self.n)
         xl = x.reshape(self.m,self.p,order='F')
         
-        t = sum(np.fft.fft(xl.T,self.m)*np.fft.fft(self.w.T,self.m))
-        return np.fft.ifft(t)
+        t = sum(np.fft.fft(xl.T,self.m+self.q)*np.fft.fft(self.w.T,self.m+self.q))
+        slc = slice(self.q/2,self.q/2+self.m)
+        return np.fft.ifft(t)[slc].real
             
     def mtxT(self,y):
         ''' adjoint multiplication operator '''
@@ -177,7 +178,7 @@ def test():
 
 def testMulti():
     ''' test routine to make sure multiple filters work '''
-#    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt
     comm = MPI.COMM_WORLD
     rk = comm.Get_rank()
     nProc = comm.Get_size()
@@ -205,14 +206,18 @@ def testMulti():
     print 'par time ' + repr(time.time()-tm)
     xf = A.mtxT(yf)
     
-#    plt.figure(1)
-#    plt.subplot(2,1,1)
-#    plt.plot(range(m), yf, range(m), yp)
-#    
-#    plt.subplot(2,1,2)
-#    plt.plot(range(m*p), x, range(m*p), xf)
-#    
-#    plt.show()
+    print 'yf s ' + repr(yf.shape)
+    print 'yp s ' + repr(yp.shape)
+    
+    plt.figure(1)
+    plt.subplot(2,1,1)
+    plt.plot(range(yf.size), yf.real, np.arange(yp.size), yp.real)
+    
+    plt.subplot(2,1,2)
+    
+
+    
+    plt.show()
 
 
 if __name__ == '__main__':
