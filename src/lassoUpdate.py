@@ -79,4 +79,51 @@ def testSvt():
     plt.show()
     
     return y
+
+
+def test():
+    ''' test against matlab routine. double check! because there ain't no CVX for this'''
+    
+    import scipy.io as spio
+    import matplotlib.pyplot as plt
+    import designerConv
+    import convFourier
+    
+    D = spio.loadmat('fakeL1.mat')
+    m = D['m'].astype('int64').flatten()
+    p = D['p'].astype('int64').flatten()
+    q = D['q'].astype('int64').flatten()
+    wTrue = D['wTrue']
+    y = D['sig'].flatten()
+    
+    print 'size of m,p,q ' + repr(m) + ' ' + repr(p) + ' ' + repr(q)
+    print 'and thes is mp ' + repr(m*p)
+    rho = 1
+    lmb = 0.2
+    W = lasso(m,(p+1)*m,rho,lmb)
+    
+#    A = designerConv.convOperator(m,p,q)
+    A = convFourier.convFFT(m,p,q)
+    A.changeWeights(wTrue)
+    
+    
+    print wTrue.shape
+    print y.shape
+    
+    z = W.solveL1(y, A)
+    
+    zTrue = D['zTrue'].flatten()
+    zM = D['zd'].flatten()
+    
+    print np.linalg.norm(zM-z)
+    
+    plt.figure(83)
+    plt.plot(range(z.size), np.abs(z), range(zTrue.size), np.abs(zTrue),
+             range(zM.size), np.abs(zM))
+    
+    plt.show()
+    
+
+if __name__=='__main__':
+    test()
     

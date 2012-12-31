@@ -37,7 +37,7 @@ def main():
     rho = 5.0
     lmb = 0.5e-3
     xi = 0.2
-    fac = np.sqrt((m/q)/2.0)
+    fac = 1.0; # np.sqrt((m/q)/2.0)
     ''' initialize MPI routine '''
     
     
@@ -48,9 +48,10 @@ def main():
     ''' initialize weights '''
     # D = spio.loadmat('fakew.mat')
     # wt = D['wini']
-    wt = np.random.randn(q,p)/np.sqrt(q) #D['w']
+#    wt = np.random.randn(q,p)/np.sqrt(q) #D['w']
     
-    wt = weightAgg(wt,p,q,comm)
+    
+    wt = weightInit(p,q,comm)
     
     if plain:
         A = convFFT(m,p,q,fct=fac)
@@ -68,7 +69,7 @@ def main():
     rrz = list()
     gap = list()
     ''' begin loop '''
-    for itz in range(1000):
+    for itz in range(200):
         ws = newWW.wp
         A.changeWeights(newWW.wp)
         tm = time()
@@ -124,7 +125,19 @@ def weightAgg(U,p,q,comm):
     
     return wt
             
+def weightInit(p,q,comm):
+    ''' create some initial, normalized weights '''
+    rank = comm.Get_rank()
+    if rank == 0:
+        wt = np.random.randn(q,p)/np.sqrt(q)
+    else:
+        wt = None
+        
+    return comm.bcast(wt,root=0)
+        
     
+    
+
 def getData(m,rank=0):
     ''' simple function to grab data 
     returns zero mean, normalized data sample
