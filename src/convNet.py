@@ -30,7 +30,7 @@ def main():
             plain = False
         
         
-    m = 5000 # size of data
+    m = 50000 # size of data
     p = 50 # number of filters
     q = 300 # length of filters
     
