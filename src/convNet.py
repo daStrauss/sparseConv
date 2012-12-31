@@ -34,8 +34,8 @@ def main():
     p = 50 # number of filters
     q = 300 # length of filters
     
-    rho = 10
-    lmb = 0.5
+    rho = 5
+    lmb = 5.1
     xi = 0.2
     fac = 1.0; # np.sqrt((m/q)/2.0)
     ''' initialize MPI routine '''
