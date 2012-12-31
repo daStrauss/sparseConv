@@ -19,6 +19,7 @@ class lasso(object):
         self.n = n
         self.rho = rho
         self.lmb = lmb
+        self.alp = 1.5
         
         self.zp = np.zeros(self.n,dtype='complex128') # primal variable
         self.zd = np.zeros(self.n,dtype='complex128') # aux variable
@@ -44,10 +45,14 @@ class lasso(object):
             ss,info = solver.cg(M,A.mtx(b),tol=1e-6,maxiter=20)
             
             print 'l1 iter: ' + repr(itz) + ' converge info: ' + repr(info)
-            self.zp = b/self.rho - (1.0/(self.rho**2))*(A.mtxT(ss))
             
+            zold = self.zd
             
-            self.zd = svt(self.zp+ zt,self.lmb/self.rho)
+            uux = b/self.rho - (1.0/(self.rho**2))*(A.mtxT(ss))
+            
+            self.zp = self.alp*uux + (1.0 - self.alp)*zold;
+            
+            self.zd = svt(self.zp + zt,self.lmb/self.rho)
     
             zt = zt + self.zp-self.zd
             

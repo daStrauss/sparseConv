@@ -80,6 +80,14 @@ class convOperator(object):
         # print 'eval time ' + repr(time.time()-tm)
         return y
     
+    def mtxTRX(self,x):
+        tm = time.time()
+        assert(x.size == self.n)
+        xl = x.reshape(self.m,self.p,order='F')
+        
+        t = sum(np.fft.fft(xl.T,self.m)*np.fft.fft(self.w.T,self.m))
+        return np.fft.ifft(t)
+            
     def mtxT(self,y):
         ''' adjoint multiplication operator '''
         tm = time.time()
@@ -175,9 +183,9 @@ def testMulti():
     nProc = comm.Get_size()
     
     ''' some test dimensions, small in size '''
-    p = 200
-    q = 100
-    m = 100000
+    p = 50
+    q = 300
+    m = 50000
     
     ''' create the operator, initialize '''
     A = convOperator(m,p,q)
@@ -193,7 +201,7 @@ def testMulti():
     yf = A.mtx(x)
     print 'single itme ' + repr(time.time()-tm)
     tm = time.time()
-    yp = A.mtxPAR(x)
+    yp = A.mtxTRX(x)
     print 'par time ' + repr(time.time()-tm)
     xf = A.mtxT(yf)
     
@@ -205,6 +213,7 @@ def testMulti():
 #    plt.plot(range(m*p), x, range(m*p), xf)
 #    
 #    plt.show()
-    
+
+
 if __name__ == '__main__':
     testMulti()

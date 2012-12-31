@@ -30,12 +30,12 @@ def main():
             plain = False
         
         
-    m = 50000 # size of data
+    m = 5000 # size of data
     p = 50 # number of filters
     q = 300 # length of filters
     
-    rho = 5.0
-    lmb = 0.5e-3
+    rho = 10
+    lmb = 0.5
     xi = 0.2
     fac = 1.0; # np.sqrt((m/q)/2.0)
     ''' initialize MPI routine '''
@@ -69,7 +69,7 @@ def main():
     rrz = list()
     gap = list()
     ''' begin loop '''
-    for itz in range(200):
+    for itz in range(10):
         ws = newWW.wp
         A.changeWeights(newWW.wp)
         tm = time()
@@ -152,7 +152,7 @@ def getData(m,rank=0):
     slz = slice(cix,cix+m)
     y = D['fs'][slz].astype('complex128').flatten()
     y = y - np.mean(y)
-    y = y/np.linalg.norm(y)
+#    y = y/np.linalg.norm(y)
     
 #    plt.figure(200)
 #    plt.plot(y.real)
