@@ -81,7 +81,7 @@ def main():
     rrz = list()
     gap = list()
     ''' begin loop '''
-    for itz in range(10):
+    for itz in range(1000):
         ws = newWW.wp
         A.changeWeights(newWW.wp)
         tm = time()
