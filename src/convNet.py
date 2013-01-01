@@ -25,24 +25,36 @@ def main():
     nProc = comm.Get_size()
     
     plain = True
-    if len(sys.argv) == 2:
+    if len(sys.argv) >= 2:
         if sys.argv[1] == 'plain':
             plain = False
+    
+    if len(sys.argv) >= 3:
+        dts = sys.argv[2]
+    else:
+        dts = 'plmr'
+        
         
         
     m = 50000 # size of data
     p = 50 # number of filters
     q = 300 # length of filters
     
-    rho = 1
-    lmb = 0.5
-    xi = 0.2
+    if dts == 'plmr':
+        rho = 1
+        lmb = 0.5
+        xi = 0.2
+    elif dts == 'mpk':
+        rho = 0.1
+        lmb = 1e-6
+        xi = 0.2
+        
     fac = 1.0; # np.sqrt((m/q)/2.0)
     ''' initialize MPI routine '''
     
     
     ''' load data, given rank '''
-    y = getData(m,rank=rk)
+    y = getData(m,dts,rank=rk)
 
     
     ''' initialize weights '''
@@ -92,9 +104,11 @@ def main():
         outd = {'y':y, 'z':z, 'wt':wt,'wp':wp,'m':m,'p':p,'q':q, 'rho':rho,'lmb':lmb, 'xi':xi, 'rrz':rrz,'gap':gap, 'ws':ws }
         
         if plain:
-            spio.savemat('miniOut_' + repr(itz) + '_' + repr(nProc) + '_' + repr(rk), outd) 
+            spio.savemat('miniOut_' + repr(nProc) + '_' + repr(rk), outd)
+        elif dts == 'mpk':
+            spio.savemat('miniOutMPK_' + repr(nProc) + '_' + repr(rk), outd)
         else:
-            spio.savemat('plainOut_' + repr(itz) + '_' + repr(nProc) + '_' + repr(rk), outd) 
+            spio.savemat('plainOut_' + repr(nProc) + '_' + repr(rk), outd) 
     
     return y,z,optl1,A,wt
     
@@ -138,25 +152,29 @@ def weightInit(p,q,comm):
     
     
 
-def getData(m,rank=0):
+def getData(m,dts,rank=0):
     ''' simple function to grab data 
     returns zero mean, normalized data sample
     '''
     
 #    import matplotlib.pyplot as plt
-    
-    D = spio.loadmat('../data/plmr.mat')
-    
-    # upb = D['fs'].size - m-1
-    cix = 1000 + rank*m # np.random.random_integers(0,upb,1)
-    slz = slice(cix,cix+m)
-    y = D['fs'][slz].astype('complex128').flatten()
-    y = y - np.mean(y)
-#    y = y/np.linalg.norm(y)
-    
-#    plt.figure(200)
-#    plt.plot(y.real)
-#    plt.show()
+    if dts == 'plmr':
+        D = spio.loadmat('../data/plmr.mat')
+        cix = 1000 + rank*m # np.random.random_integers(0,upb,1)
+        slz = slice(cix,cix+m)
+        y = D['fs'][slz].astype('complex128').flatten()
+        y = y - np.mean(y)
+
+    if dts == 'mpk':
+        nbr = (np.floor(rank/2) + 900).astype('int64')
+        D = spio.loadmat('../data/lcd' + repr(nbr) + '.mat')
+        if rank%2 == 0:
+            rng = slice(500000-3*m/4,500000+m/4)
+        else:
+            rng = slice(500000-m/4,500000+3*m/4)
+            
+        y = D['alldat'][0][0][rng].astype('complex128').flatten()
+        y = y-np.mean(y)
     
     print 'shape of y ' + repr(y.shape)
     return y
