@@ -37,7 +37,7 @@ def main():
         
         
     m = 50000 # size of data
-    p = 50 # number of filters
+    p = 25 # number of filters
     q = 300 # length of filters
     
     if dts == 'plmr':
@@ -104,7 +104,7 @@ def main():
         outd = {'y':y, 'z':z, 'wt':wt,'wp':wp,'m':m,'p':p,'q':q, 'rho':rho,'lmb':lmb, 'xi':xi, 'rrz':rrz,'gap':gap, 'ws':ws }
         
         if plain & (dts == 'plmr'):
-            spio.savemat('miniOut_' + repr(nProc) + '_' + repr(rk), outd)
+            spio.savemat('miniOut_' + repr(p) + '_' + repr(nProc) + '_' + repr(rk), outd)
         elif plain & (dts == 'mpk'):
             spio.savemat('miniOutMPK_' + repr(nProc) + '_' + repr(rk), outd)
         else:
