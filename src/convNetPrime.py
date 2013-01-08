@@ -1,16 +1,21 @@
 '''
-Created on Dec 28, 2012
+Created on Dec 26, 2012
 
 @author: dstrauss
+
+creating some routines to make a convolutional net. especially one that works in parallel
+and this one is going to work over multiple channels
+
 '''
 
 import scipy.io as spio
 import numpy as np
-from designerConv import convOperator
+from convFourier import convFFT
 from lassoUpdate import lasso
 import weightsUpdate
 from time import time
 from mpi4py import MPI
+import sys
 
 
 
@@ -20,51 +25,91 @@ def main():
     rk = comm.Get_rank()
     nProc = comm.Get_size()
     
+    plain = True
+    if len(sys.argv) >= 2:
+        if sys.argv[1] == 'plain':
+            plain = False
     
-    m = 60000 # size of data
-    p = 50 # number of filters
+    if len(sys.argv) >= 3:
+        dts = sys.argv[2]
+    else:
+        dts = 'plmr'
+        
+        
+        
+    m = 50000 # size of data
+    p = 25 # number of filters
     q = 300 # length of filters
     
-    rho = 5.0
-    lmb = 1e-3
-    xi = 0.2
-    fac = np.sqrt((m/q)/2.0)
+    if dts == 'plmr':
+        rho = 1
+        lmb = 0.5
+        xi = 0.2
+    elif dts == 'mpk':
+        rho = 0.1
+        lmb = 1e-6
+        xi = 0.2
+        
+    fac = 1.0; # np.sqrt((m/q)/2.0)
     ''' initialize MPI routine '''
     
     
     ''' load data, given rank '''
-    y = getData(m,rank=rk)
+    y = getData(m,dts,rank=rk)
 
     
     ''' initialize weights '''
-#    D = spio.loadmat('fakew.mat')
-#    wt = D['w']
-    wt = np.random.randn(q,p)*0.05 #D['w']
-    A = convOperator(m,p,q)
+    # D = spio.loadmat('fakew.mat')
+    # wt = D['wini']
+#    wt = np.random.randn(q,p)/np.sqrt(q) #D['w']
     
-    optl1 = lasso(m,m*(p),rho,lmb)
     
-    newWW = weightsUpdate.weightsUpdate(m,p,q,xi)
+    wt = weightInit(p,q,comm)
+    
+    if plain:
+        A = convFFT(m,p,q,fct=fac)
+        optl1 = lasso(m,m*(p+1),rho,lmb)
+        
+    else:
+        print 'Doing plain!'
+        A = convOperator(m,p,q)
+        optl1 = lasso(m,m*(p),rho,lmb)
+        
+        
+    newWW = weightsUpdate.weightsUpdate(m,p,q,xi,fct=fac)
     newWW.wp = wt
     
     rrz = list()
     gap = list()
     ''' begin loop '''
-    for itz in range(10):
+    for itz in range(1000):
+        ws = newWW.wp
         A.changeWeights(newWW.wp)
         tm = time()
         z = optl1.solveL1(y, A)
-        rrz.append(optl1.rrz.pop())
-        gap.append(optl1.gap.pop())
-        print 'solved l1 itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
+        rrz = optl1.rrz # .append(optl1.rrz.pop())
+        gap = optl1.gap #.append(optl1.gap.pop())
+        print 'rank ' + repr(rk) + ' of ' + repr(nProc) +  ' solved l1 itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
         tm = time()
-        wmx = newWW.updatePlain(y, wt, z)
-        print 'solved w update itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
+        
+        if plain:
+            wmx = newWW.updateFourier(y, wt, z)
+        else:
+            wmx = newWW.updatePlain(y, wt, z)
+            
+        print 'rank ' + repr(rk) + ' of ' + repr(nProc) +  ' solved w update itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
         tm = time()
         wt = weightAgg(wmx,p,q,comm)
-        print 'have new weights itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
-        outd = {'y':y, 'z':z, 'wt':wt,'m':m,'p':p,'q':q, 'rho':rho,'lmb':lmb, 'xi':xi, 'rrz':rrz,'gap':gap }
-        spio.savemat('testout_' + repr(itz) + '_' + repr(nProc) + '_' + repr(rk), outd) 
+        wp = newWW.wp
+        print 'rank ' + repr(rk) + ' of ' + repr(nProc) +  ' have new weights itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
+        outd = {'y':y, 'z':z, 'wt':wt,'wp':wp,'m':m,'p':p,'q':q, 'rho':rho,'lmb':lmb, 'xi':xi, 'rrz':rrz,'gap':gap, 'ws':ws }
+        
+        if plain & (dts == 'plmr'):
+            spio.savemat('miniOut_' + repr(p) + '_' + repr(nProc) + '_' + repr(rk), outd)
+        elif plain & (dts == 'mpk'):
+            spio.savemat('miniOutMPK_' + repr(nProc) + '_' + repr(rk), outd)
+        else:
+            spio.savemat('plainOut_' + repr(nProc) + '_' + repr(rk), outd) 
     
     return y,z,optl1,A,wt
     
@@ -95,26 +140,42 @@ def weightAgg(U,p,q,comm):
     
     return wt
             
+def weightInit(p,q,comm):
+    ''' create some initial, normalized weights '''
+    rank = comm.Get_rank()
+    if rank == 0:
+        wt = np.random.randn(q,p)/np.sqrt(q)
+    else:
+        wt = None
+        
+    return comm.bcast(wt,root=0)
+        
     
-def getData(m,rank=0):
+    
+
+def getData(m,dts,rank=0):
     ''' simple function to grab data 
     returns zero mean, normalized data sample
     '''
     
 #    import matplotlib.pyplot as plt
-    
-    D = spio.loadmat('../data/plmr.mat')
-    
-    # upb = D['fs'].size - m-1
-    cix = 1000 + rank*m # np.random.random_integers(0,upb,1)
-    slz = slice(cix,cix+m)
-    y = D['fs'][slz].astype('complex128').flatten()
-    y = y - np.mean(y)
-    y = y/np.linalg.norm(y)
-    
-#    plt.figure(200)
-#    plt.plot(y.real)
-#    plt.show()
+    if dts == 'plmr':
+        D = spio.loadmat('../data/plmr.mat')
+        cix = 1000 + rank*m # np.random.random_integers(0,upb,1)
+        slz = slice(cix,cix+m)
+        y = D['fs'][slz].astype('complex128').flatten()
+        y = y - np.mean(y)
+
+    if dts == 'mpk':
+        nbr = (np.floor(rank/2) + 900).astype('int64')
+        D = spio.loadmat('../data/lcd' + repr(nbr) + '.mat')
+        if rank%2 == 0:
+            rng = slice(500000-3*m/4,500000+m/4)
+        else:
+            rng = slice(500000-m/4,500000+3*m/4)
+            
+        y = D['alldat'][0][0][rng].astype('complex128').flatten()
+        y = y-np.mean(y)
     
     print 'shape of y ' + repr(y.shape)
     return y
