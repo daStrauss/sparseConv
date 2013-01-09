@@ -47,7 +47,7 @@ def main():
         xi = 0.2
     elif dts == 'mpk':
         rho = 0.1
-        lmb = 1e-6
+        lmb = 4e-6
         xi = 0.2
         
     fac = 1.0; # np.sqrt((m/q)/2.0)
