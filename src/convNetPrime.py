@@ -37,7 +37,7 @@ def main():
         
         
         
-    m = 50000 # size of data
+    m = 1000 # size of data
     p = 25 # number of filters
     q = 300 # length of filters
     
@@ -53,11 +53,11 @@ def main():
     fac = 1.0; # np.sqrt((m/q)/2.0)
     ''' initialize MPI routine '''
     
-    
-    ''' load data, given rank '''
-    y = getData(m,dts,rank=rk)
-    
     ch = 3
+    ''' load data, given rank '''
+    y = getData(m,dts,ch,rank=rk)
+    
+    
     
     ''' initialize weights '''
     # D = spio.loadmat('fakew.mat')
@@ -72,18 +72,25 @@ def main():
         
     else:
         A = [dtm(m,p,q,fourier=True) for ix in xrange(ch)]
+    
+    for Q in A:
+        print Q.n
+            
+    optl1 = lasso(m,A[0].n,rho,lmb,ch)
         
         
-        
-    newWW = weightsUpdate.weightsUpdate(m,p,q,xi,fct=fac)
-    newWW.wp = wt
+    newWW = [weightsUpdate.weightsUpdate(m,p,q,xi) for ix in xrange(ch)]
+    print newWW[0].m
+    for WWl,wl in zip(newWW,wt):
+        WWl.wp = wl
     
     rrz = list()
     gap = list()
     ''' begin loop '''
-    for itz in range(1000):
-        ws = newWW.wp
-        A.changeWeights(newWW.wp)
+    for itz in range(1):
+        ws = [WWl.wp for WWl in newWW]
+        for Q,w in zip(A,wt) :
+            Q.changeWeights(w)
         tm = time()
         z = optl1.solveL1(y, A)
         rrz = optl1.rrz # .append(optl1.rrz.pop())
@@ -92,14 +99,14 @@ def main():
         tm = time()
         
         if plain:
-            wmx = newWW.updateFourier(y, wt, z)
+            wmx = [WL.updatePlain(yl, wtl, zl) for WL,yl,wtl,zl in zip(newWW,y,wt,z)]
         else:
-            wmx = newWW.updatePlain(y, wt, z)
+            wmx = [WL.updateFourier(yl, wtl, zl) for WL,yl,wtl,zl in zip(newWW,y,wt,z)]
             
         print 'rank ' + repr(rk) + ' of ' + repr(nProc) +  ' solved w update itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
         tm = time()
-        wt = weightAgg(wmx,p,q,comm)
-        wp = newWW.wp
+        wt = [weightAgg(wmxl,p,q,comm) for wmxl in wmx]
+        wp = [WL.wp for WL in newWW]
         print 'rank ' + repr(rk) + ' of ' + repr(nProc) +  ' have new weights itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
         outd = {'y':y, 'z':z, 'wt':wt,'wp':wp,'m':m,'p':p,'q':q, 'rho':rho,'lmb':lmb, 'xi':xi, 'rrz':rrz,'gap':gap, 'ws':ws }
         
@@ -152,7 +159,7 @@ def weightInit(p,q,comm):
     
     
 
-def getData(m,dts,rank=0):
+def getData(m,dts,ch,rank=0):
     ''' simple function to grab data 
     returns zero mean, normalized data sample
     '''
@@ -168,15 +175,19 @@ def getData(m,dts,rank=0):
     if dts == 'mpk':
         nbr = (np.floor(rank/2) + 900).astype('int64')
         D = spio.loadmat('../data/lcd' + repr(nbr) + '.mat')
-        if rank%2 == 0:
-            rng = slice(500000-3*m/4,500000+m/4)
-        else:
-            rng = slice(500000-m/4,500000+3*m/4)
-            
-        y = D['alldat'][0][0][rng].astype('complex128').flatten()
-        y = y-np.mean(y)
+        
+        y = list()
+        for ix in xrange(ch):
+            if rank%2 == 0:
+                rng = slice(500000-3*m/4,500000+m/4)
+            else:
+                rng = slice(500000-m/4,500000+3*m/4)
+            yl = D['alldat'][0][ix][rng].astype('complex128').flatten()
+            yl = yl-np.mean(yl)
+            y.append(yl)
     
-    print 'shape of y ' + repr(y.shape)
+    print 'shape of y ' + repr(len(y))
+    print [yl.shape for yl in y]
     return y
     
 def testMain():

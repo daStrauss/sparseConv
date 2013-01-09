@@ -14,7 +14,7 @@ import solver
 
 class weightsUpdate(object):
     ''' class that implements methods for updating weights '''
-    def __init__(self,m,p,q,xi,fct=1.0):
+    def __init__(self,m,p,q,xi):
         self.p = p
         self.q = q
         self.m = m
@@ -22,7 +22,7 @@ class weightsUpdate(object):
         self.xi = xi
         self.wp = np.zeros((q,p))
         self.wd = np.zeros((q,p))
-        self.fct = fct
+ 
         
     def updatePlain(self,y,wt,z):
         ''' update for weights '''
@@ -76,7 +76,13 @@ class weightsUpdate(object):
         zf = z[(self.m*self.p):]
         
         M = self.makeCGM()
-        b = self.mtxT(y - (self.fct/np.sqrt(self.m))*np.fft.fft(zf)) + self.xi*(wt.flatten(order='F')-self.wd.flatten(order='F'))
+        print y.shape
+        print wt.shape
+        print z.shape
+        print zf.shape
+        print self.m
+        print self.p
+        b = self.mtxT(y - (1.0/np.sqrt(self.m))*np.fft.fft(zf)) + self.xi*(wt.flatten(order='F')-self.wd.flatten(order='F'))
 
         ss,info = solver.cg(M,b,tol=1e-6,maxiter=30,pll=False)
         print 'CG info: ' + repr(info)
@@ -109,7 +115,7 @@ def test():
     bt = D['b'].flatten()
     xi = 0.2
     
-    W = weightsUpdate(m,p,q,xi,fct=1.0)
+    W = weightsUpdate(m,p,q,xi)
     wt = np.zeros(D['wTrue'].shape)
     y = D['sig'].flatten()
     z = D['z'].flatten()

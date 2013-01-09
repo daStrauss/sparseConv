@@ -8,15 +8,16 @@ class for implementing the l1 update via pipelined admm
 '''
 
 import numpy as np
-import scipy.sparse.linalg as lin
 import solver
+import copy
 
 class lasso(object):
     ''' class to implement l1 minimization update '''
-    def __init__(self,m,n,rho,lmb):
+    def __init__(self,m,n,rho,lmb,ch):
         ''' set some parameters '''
         self.m = m
         self.n = n
+        self.ch = ch
         self.rho = rho
         self.lmb = lmb
         self.alp = 1.5
@@ -31,35 +32,47 @@ class lasso(object):
         input: x,y,A
         where A is a designerConv/convFourier object with mtx, mtxT routines 
         '''
-        zt = np.zeros(self.n,dtype='complex128')
-        self.zd = np.zeros(self.n,dtype='complex128')
+        assert(len(y) == self.ch)
+        assert(len(A) == self.ch)
         
-        Atb = A.mtxT(y);
-        M = invOp(A,self.rho,self.m)
+        zt = [np.zeros(self.n,dtype='complex128') for ix in xrange(self.ch)]
+        zd = [np.zeros(self.n,dtype='complex128') for ix in xrange(self.ch)]
+
+        print [yl.shape for yl in y]
+        Atb = [Al.mtxT(yl) for Al,yl in zip(A,y)]
+        print [Atbl.shape for Atbl in Atb]
+        print [ztl.shape for ztl in zt]
+        
+        M = [invOp(Al,self.rho,self.m) for Al in A]
+        
         self.rrz = list()
         self.gap = list()
         
         for itz in range(20):
-            b = Atb + self.rho*(self.zd-zt);
             
-            ss,info = solver.cg(M,A.mtx(b),tol=1e-6,maxiter=20)
+            b = [Atbl + self.rho*(zdl-ztl) for Atbl,zdl,ztl in zip(Atb,zd,zt)]
             
-            print 'l1 iter: ' + repr(itz) + ' converge info: ' + repr(info)
+            sout = [solver.cg(Ml,Al.mtx(bl),tol=1e-6,maxiter=20) for Ml,Al,bl in zip(M,A,b)]
             
-            zold = self.zd
+            stg = 'l1 iter: ' + repr(itz)
+            for ss in sout:
+                stg += ' cvg ' + repr(ss[1])
             
-            uux = b/self.rho - (1.0/(self.rho**2))*(A.mtxT(ss))
+            zold = copy.deepcopy(zd)
             
-            self.zp = self.alp*uux + (1.0 - self.alp)*zold;
+            uux = [bl/self.rho-(1.0/(self.rho**2))*(Al.mtxT(ss[0])) for bl,Al,ss in zip(b,A,sout)]
             
-            self.zd = svt(self.zp + zt,self.lmb/self.rho)
+            zp = [self.alp*uuxl + (1.0 - self.alp)*zoldl for uuxl,zoldl in zip(uux,zold)]
+            
+            zths = [a+b for a,b in zip(zp,zt)]
+            zd = svtspecial(zths,self.lmb/self.rho)
     
-            zt = zt + self.zp-self.zd
+            zt = [a + b-c for a,b,c in zip(zt,zp,zd)]
             
-            self.rrz.append(np.linalg.norm(A.mtx(self.zp) - y))
-            self.gap.append(np.linalg.norm(self.zp-self.zd ))
+            self.rrz.append(sum([np.linalg.norm(Al.mtx(zpl) - yl) for Al,zpl,yl in zip(A,zp,y)]))
+            self.gap.append(sum([np.linalg.norm(zpl-zdl) for zpl,zdl in zip(zp,zd)] ))
             
-        return self.zd
+        return zd
         
         
 
@@ -73,6 +86,10 @@ def invOp(fnc,rho,n):
 def svt(z,lmb):
     ''' soft thresholding '''
     return np.maximum(1.0-lmb/np.abs(z),0.0)*z;
+
+def svtspecial(z,lmb):
+    ''' soft thresholding '''
+    return np.maximum(1.0-lmb/np.sqrt(sum(np.abs(z)**2)),0.0)*z;
 
 def testSvt():
     import matplotlib.pyplot as plt
