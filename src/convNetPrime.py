@@ -10,7 +10,7 @@ and this one is going to work over multiple channels
 
 import scipy.io as spio
 import numpy as np
-from convFourier import convFFT
+from dataModel import dtm
 from lassoUpdate import lasso
 import weightsUpdate
 from time import time
@@ -56,7 +56,8 @@ def main():
     
     ''' load data, given rank '''
     y = getData(m,dts,rank=rk)
-
+    
+    ch = 3
     
     ''' initialize weights '''
     # D = spio.loadmat('fakew.mat')
@@ -64,16 +65,14 @@ def main():
 #    wt = np.random.randn(q,p)/np.sqrt(q) #D['w']
     
     
-    wt = weightInit(p,q,comm)
+    wt = [weightInit(p,q,comm) for ix in xrange(ch)]
     
     if plain:
-        A = convFFT(m,p,q,fct=fac)
-        optl1 = lasso(m,m*(p+1),rho,lmb)
+        A = [dtm(m,p,q,fourier=False) for ix in xrange(ch)]
         
     else:
-        print 'Doing plain!'
-        A = convOperator(m,p,q)
-        optl1 = lasso(m,m*(p),rho,lmb)
+        A = [dtm(m,p,q,fourier=True) for ix in xrange(ch)]
+        
         
         
     newWW = weightsUpdate.weightsUpdate(m,p,q,xi,fct=fac)

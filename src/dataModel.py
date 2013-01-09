@@ -52,7 +52,7 @@ class dtm(object):
         
         
     
-    def applyW(self,z):
+    def mtx(self,z):
         ''' apply all of the convolutional weights to the same set of z '''
         xl = z[:(self.m*self.p)].reshape(self.m,self.p,order='F')
         slc = slice(self.q/2,self.q/2+self.m)  
@@ -68,7 +68,7 @@ class dtm(object):
         return y
     
     
-    def applyWT(self,y):
+    def mtxT(self,y):
         ''' adjoint multiplication operator '''
         x = list()
         for wl in self.w.T:
@@ -80,42 +80,6 @@ class dtm(object):
             
         x = np.array(x).flatten()
         return x
-    
-    def solveL1(self,yin):
-        ''' solve min ||y-Ax|| + lmb||x||_1 with a warm start for x=zt 
-        input: x,y,A
-        where A is a designerConv/convFourier object with mtx, mtxT routines 
-        '''
-        assert(len(yin) == self.ch)
-        zt = np.zeros(self.n,dtype='complex128')
-        zd = np.zeros(self.n,dtype='complex128')
-        
-        Atb = A.mtxT(y);
-        M = invOp(A,self.rho,self.m)
-        self.rrz = list()
-        self.gap = list()
-        
-        for itz in range(20):
-            b = Atb + self.rho*(self.zd-zt);
-            
-            ss,info = solver.cg(M,A.mtx(b),tol=1e-6,maxiter=20)
-            
-            print 'l1 iter: ' + repr(itz) + ' converge info: ' + repr(info)
-            
-            zold = self.zd
-            
-            uux = b/self.rho - (1.0/(self.rho**2))*(A.mtxT(ss))
-            
-            self.zp = self.alp*uux + (1.0 - self.alp)*zold;
-            
-            self.zd = svt(self.zp + zt,self.lmb/self.rho)
-    
-            zt = zt + self.zp-self.zd
-            
-            self.rrz.append(np.linalg.norm(A.mtx(self.zp) - y))
-            self.gap.append(np.linalg.norm(self.zp-self.zd ))
-            
-        return self.zd
     
         
 def test():
@@ -148,7 +112,7 @@ def test():
     print 'single itme ' + repr(time.time()-tm)
     
     tm = time.time()
-    yp = [Q.applyW(xl) for Q,xl in zip(B,x)] 
+    yp = [Q.mtx(xl) for Q,xl in zip(B,x)] 
     print 'new time ' + repr(time.time()-tm)
     
     print 'yf s ' + repr(yf[0].shape)
@@ -162,7 +126,7 @@ def test():
     print 'making list time ' + repr(time.time()-tm)
     
     tm = time.time()
-    h = B.applyWT(yp)
+    h = [Q.mtxT(yl) for Q,yl in zip(B,yp)]
     print 'new time ' + repr(time.time()-tm)
     
     for a,b in zip(g,h):
