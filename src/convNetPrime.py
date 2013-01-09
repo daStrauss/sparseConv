@@ -37,7 +37,7 @@ def main():
         
         
         
-    m = 1000 # size of data
+    m = 10000 # size of data
     p = 25 # number of filters
     q = 300 # length of filters
     
@@ -87,7 +87,7 @@ def main():
     rrz = list()
     gap = list()
     ''' begin loop '''
-    for itz in range(1):
+    for itz in range(10):
         ws = [WWl.wp for WWl in newWW]
         for Q,w in zip(A,wt) :
             Q.changeWeights(w)
