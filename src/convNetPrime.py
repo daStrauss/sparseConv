@@ -44,7 +44,7 @@ def main():
         
         
         
-    m = 50000 # size of data
+    m = 500000 # size of data
     p = 25 # number of filters
     q = 300 # length of filters
     
@@ -185,11 +185,7 @@ def getData(m,dts,ch,rank=0):
         
         y = list()
         for ix in xrange(ch):
-            if rank%2 == 0:
-                rng = slice(500000-3*m/4,500000+m/4)
-            else:
-                rng = slice(500000-m/4,500000+3*m/4)
-            yl = D['alldat'][0][ix][rng].astype('complex128').flatten()
+            yl = D['alldat'][0][ix][:m].astype('complex128').flatten()
             yl = yl-np.mean(yl)
             y.append(yl)
     
