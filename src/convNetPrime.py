@@ -25,11 +25,18 @@ def main():
     rk = comm.Get_rank()
     nProc = comm.Get_size()
     
-    plain = True
-    if len(sys.argv) >= 2:
+    if len(sys.argv) <= 2:
+        ''' complain '''
+        print 'need another argument: plain or not?'
+        return 0
+    else:
         if sys.argv[1] == 'plain':
+            plain = True
+        elif sys.argv[1] == 'fft':
             plain = False
-    
+        else:
+            plain = True
+            
     if len(sys.argv) >= 3:
         dts = sys.argv[2]
     else:
@@ -37,7 +44,7 @@ def main():
         
         
         
-    m = 10000 # size of data
+    m = 50000 # size of data
     p = 25 # number of filters
     q = 300 # length of filters
     
@@ -50,7 +57,7 @@ def main():
         lmb = 4e-6
         xi = 0.2
         
-    fac = 1.0; # np.sqrt((m/q)/2.0)
+#    fac = 1.0; # np.sqrt((m/q)/2.0)
     ''' initialize MPI routine '''
     
     ch = 3
@@ -87,7 +94,7 @@ def main():
     rrz = list()
     gap = list()
     ''' begin loop '''
-    for itz in range(10):
+    for itz in range(1000):
         ws = [WWl.wp for WWl in newWW]
         for Q,w in zip(A,wt) :
             Q.changeWeights(w)
