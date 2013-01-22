@@ -27,7 +27,7 @@ def main():
     
     if len(sys.argv) <= 2:
         ''' complain '''
-        print 'need another argument: plain or not?'
+        print 'need  arguments: plain or fft?'
         return 0
     else:
         if sys.argv[1] == 'plain':
@@ -41,9 +41,8 @@ def main():
         dts = sys.argv[2]
     else:
         dts = 'plmr'
-        
-        
-        
+            
+    ''' set the parameters for how big of a problem to grab'''   
     m = 500000 # size of data
     p = 25 # number of filters
     q = 300 # length of filters
@@ -52,26 +51,17 @@ def main():
         rho = 1
         lmb = 0.5
         xi = 0.2
+        ch = 1
     elif dts == 'mpk':
         rho = 0.1
         lmb = 4e-6
         xi = 0.2
-        
-#    fac = 1.0; # np.sqrt((m/q)/2.0)
-    ''' initialize MPI routine '''
-    
-    ch = 3
+        ch = 3
+
     ''' load data, given rank '''
     y = getData(m,dts,ch,rank=rk)
     
-    
-    
-    ''' initialize weights '''
-    # D = spio.loadmat('fakew.mat')
-    # wt = D['wini']
-#    wt = np.random.randn(q,p)/np.sqrt(q) #D['w']
-    
-    
+    ''' initialize weights '''    
     wt = [weightInit(p,q,comm) for ix in xrange(ch)]
     
     if plain:
@@ -84,7 +74,6 @@ def main():
         print Q.n
             
     optl1 = lasso(m,A[0].n,rho,lmb,ch)
-        
         
     newWW = [weightsUpdate.weightsUpdate(m,p,q,xi) for ix in xrange(ch)]
     print newWW[0].m
@@ -178,7 +167,8 @@ def getData(m,dts,ch,rank=0):
         slz = slice(cix,cix+m)
         y = D['fs'][slz].astype('complex128').flatten()
         y = y - np.mean(y)
-
+        y = [y]
+        
     if dts == 'mpk':
         nbr = (np.floor(rank/2) + 900).astype('int64')
         D = spio.loadmat('../data/lcd' + repr(nbr) + '.mat')
