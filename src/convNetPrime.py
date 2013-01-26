@@ -43,15 +43,15 @@ def main():
         dts = 'plmr'
             
     ''' set the parameters for how big of a problem to grab'''   
-    m = 500000 # size of data
+    m = 50000 # size of data
     p = 25 # number of filters
     q = 300 # length of filters
     
     if dts == 'plmr':
-        rho = 1
-        lmb = 0.5
-        xi = 0.2
-        ch = 1
+        rho = 1 # l1 internal parameter
+        lmb = 0.05 # l1 weighting
+        xi = 0.2 # weights update parameter
+        ch = 1 # number of channels
     elif dts == 'mpk':
         rho = 0.1
         lmb = 4e-6
