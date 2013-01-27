@@ -1,1 +1,1 @@
-mpiexec  --mca btl_tcp_if_include "p3p2" -n 20 -wdir /shared/users/dstrauss/sparseConv/src/ python convNetPrime.py fft plmr
+mpiexec  --mca btl_tcp_if_include "p3p2" -n 20 -wdir /shared/users/dstrauss/sparseConv/src/ python convNetPrime.py plain plmr

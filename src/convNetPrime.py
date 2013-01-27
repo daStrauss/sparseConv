@@ -49,7 +49,7 @@ def main():
     
     if dts == 'plmr':
         rho = 1 # l1 internal parameter
-        lmb = 0.05 # l1 weighting
+        lmb = 0.005 # l1 weighting
         xi = 0.2 # weights update parameter
         ch = 1 # number of channels
     elif dts == 'mpk':
