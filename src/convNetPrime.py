@@ -64,12 +64,8 @@ def main():
     ''' initialize weights '''    
     wt = [weightInit(p,q,comm) for ix in xrange(ch)]
     
-    if plain:
-        A = [dtm(m,p,q,fourier=False) for ix in xrange(ch)]
+    A = [dtm(m,p,q,fourier=not plain) for ix in xrange(ch)]
         
-    else:
-        A = [dtm(m,p,q,fourier=True) for ix in xrange(ch)]
-    
     for Q in A:
         print Q.n
             
@@ -137,6 +133,8 @@ def weightAgg(U,p,q,comm):
         nrm = np.linalg.norm(wmx[:,ix])
         if nrm > 1:
             wt[:,ix] = wmx[:,ix]/nrm
+        elif nrm < 0.95:
+            wt[:,ix] = 0.95*wmx[:,ix]/(nrm)
         else:
             wt[:,ix] = wmx[:,ix]
     
