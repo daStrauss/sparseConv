@@ -11,6 +11,14 @@ import numpy as np
 
 
 def cg(A,b,maxiter=30,tol=1e-6,pll=False):
+    ''' run CG iterations in order to solve the equation Ax=b,
+    A ==> a function that implements "matrix vector" multiplication, must be Positive Semidefinite
+    b ==> right hand side in Ax=b
+    maxiter ==> maximum number of CG iterations
+    tol ==> exit tolerance, if ||Ax-b|| < tol the program exits
+    pll ==> boolean flag for doing plotting or not
+    '''
+    
     x = np.zeros(b.size,dtype=b.dtype)
     
     r=b-A(x)

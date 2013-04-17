@@ -15,12 +15,12 @@ class lasso(object):
     ''' class to implement l1 minimization update '''
     def __init__(self,m,n,rho,lmb,ch):
         ''' set some parameters '''
-        self.m = m
+        self.m = m 
         self.n = n
-        self.ch = ch
-        self.rho = rho
-        self.lmb = lmb
-        self.alp = 1.5
+        self.ch = ch # number of channels of simultaneous data
+        self.rho = rho # internal algorithm parameter 
+        self.lmb = lmb # fixed regularization parameter
+        self.alp = 1.5 # over-relaxation parameter
         
         self.zp = np.zeros(self.n,dtype='complex128') # primal variable
         self.zd = np.zeros(self.n,dtype='complex128') # aux variable
@@ -32,16 +32,18 @@ class lasso(object):
         input: x,y,A
         where A is a designerConv/convFourier object with mtx, mtxT routines 
         '''
+        # make sure that the input data and the transformation is the correct size
         assert(len(y) == self.ch)
         assert(len(A) == self.ch)
         
         zt = [np.zeros(self.n,dtype='complex128') for ix in xrange(self.ch)]
         zd = [np.zeros(self.n,dtype='complex128') for ix in xrange(self.ch)]
 
-        print [yl.shape for yl in y]
+        # debug by println statements -- gives a flavor of how the listing brackets work
+#        print [yl.shape for yl in y]
         Atb = [Al.mtxT(yl) for Al,yl in zip(A,y)]
-        print [Atbl.shape for Atbl in Atb]
-        print [ztl.shape for ztl in zt]
+#        print [Atbl.shape for Atbl in Atb]
+#        print [ztl.shape for ztl in zt]
         
         M = [invOp(Al,self.rho,self.m) for Al in A]
         
@@ -60,13 +62,17 @@ class lasso(object):
             
             zold = copy.deepcopy(zd)
             
+            # project into linear constraint
             uux = [bl/self.rho-(1.0/(self.rho**2))*(Al.mtxT(ss[0])) for bl,Al,ss in zip(b,A,sout)]
             
+            # over relax
             zp = [self.alp*uuxl + (1.0 - self.alp)*zoldl for uuxl,zoldl in zip(uux,zold)]
             
+            # soft threshold
             zths = [a+b for a,b in zip(zp,zt)]
             zd = svtspecial(zths,self.lmb/self.rho)
-    
+            
+            # update dual variables
             zt = [a + b-c for a,b,c in zip(zt,zp,zd)]
             
             self.rrz.append(sum([np.linalg.norm(Al.mtx(zpl) - yl) for Al,zpl,yl in zip(A,zp,y)]))
@@ -111,6 +117,7 @@ def test():
     import designerConv
     import convFourier
     
+    # load data from a fakel1 data set created by 'testL1.m'
     D = spio.loadmat('fakeL1.mat')
     m = D['m'].astype('int64').flatten()
     p = D['p'].astype('int64').flatten()
