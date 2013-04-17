@@ -1,4 +1,7 @@
 function [est M] = applyP(z,w,N);
+% [est M] = applyP(z,w,N);
+% I think this is another implementation of the applyW method,
+% except that the windowing/'same' settings are slightly different.
 
 K = size(w,2);
 z = reshape(z,N,K);

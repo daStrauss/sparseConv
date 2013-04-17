@@ -1,4 +1,7 @@
 function [est M] = applyD(z,w,N);
+% [est M] = applyD(z,w,N);
+% Apply the convolution matrix using the weight array w, to the
+% vector z. uses data vector of lenth N.
 
 K = size(w,2);
 zp = z((N*K)+(1:(N)));

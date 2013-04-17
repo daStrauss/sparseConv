@@ -1,5 +1,7 @@
 function [z M] = applyDT(est,w,N);
-
+% [z M] = applyDT(est,w,N);
+% applies transpose operator of convolutions and fourier expansion
+% transpose of applyD
 K = size(w,2);
 n = size(w,1);
 
