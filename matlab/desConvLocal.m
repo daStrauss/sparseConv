@@ -1,3 +1,6 @@
+% do the designerConvolution method as a local matlab
+% script.
+% best for comparing with respect to python.
 % addpath starter
 
 % M = load('/shared/users/dstrauss/ant_net/multiArm/local1.mat');

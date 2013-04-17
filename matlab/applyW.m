@@ -1,4 +1,9 @@
 function [est M] = applyW(z,w,N);
+% [est M] = applyW(z,w,N);
+% first pass at implicit matrix-vector multiplication instantiated
+% by convolution
+% z is the data to transform, w, is an array of weights, N is the
+% dimensino of the output data.
 
 K = size(w,2);
 z = reshape(z,N,K);

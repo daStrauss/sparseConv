@@ -1,4 +1,7 @@
 function [z M] = applyPT(est,w,N);
+% [z M] = applyPT(est,w,N);
+% apply transpose operator of the applyP method
+% this is convolution matrix transpose operation with more proper bounds.
 
 K = size(w,2);
 n = size(w,1);

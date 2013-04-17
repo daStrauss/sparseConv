@@ -1,4 +1,10 @@
-addpath starter
+% runs the entire learning loop with various models. Displays
+% results too -- good for comparing with Python implementaiton
+
+% addpath starter
+% uhh - I removed the starter folder, so I don't know what
+% dependencies that will break.
+
 
 % M = load('/shared/users/dstrauss/ant_net/multiArm/local1.mat');
 

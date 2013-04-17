@@ -1,4 +1,4 @@
-
+% testing routine for the applyW/applyWT methodology.
 n = 10;
 N = 100;
 x = randn(N,1);

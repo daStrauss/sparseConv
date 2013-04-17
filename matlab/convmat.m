@@ -1,4 +1,5 @@
-
+% my test code for actually making the true convmat - or an
+% explicit matrix for matrix-vector multiplication.
 v = randn(100,1);
 n = 10;
 

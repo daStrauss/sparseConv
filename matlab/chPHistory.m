@@ -1,3 +1,5 @@
+% script to look at the results from a big python run of the
+% 'plain' routine.
 base = '/shared/users/dstrauss/sparseConv/src/plainOut_';
 
 
