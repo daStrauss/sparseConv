@@ -1,5 +1,15 @@
 function [prb, rrz, dz] = paraIsta(prb,K,w,nh,nw,c,g)
-% [Q, x, prb] = paraZup(prb,K,w,lData,f,M,g,r)
+% [Q, x, prb] = paraIsta(prb,K,w,nh,nw,c,g)
+% implements an ISTA method for solving the l1 problem
+% prb is a "problem" object
+% K is a sparsity (?)
+% w are the weights
+% nh are the size of the data sequences
+% nw are the size of the weight sequences
+% c is the coefficient representing the value of the largest
+% eigenvalue of the matrix A.
+% g is something?
+
 % where N is the length of the "sparse vector window"
 
 % finv = @(x) f.T*(f.U\(f.L\(f.S*(f.R\x))));

@@ -1,4 +1,6 @@
-
+% looks like a comparison between a few different algorithms for l1
+% separation a CVX method and a non-cvx method. But this is mostly
+% a method for comparing over randomly generated data.
 clear all
 N = 50;
 ne = 150;

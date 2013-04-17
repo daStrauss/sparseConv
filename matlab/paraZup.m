@@ -1,5 +1,8 @@
 function [prb, rrz] = paraZup(prb,g)
-% [prb, rrz] = paraZup(prb,K,w,nh,nw,g)
+%[prb, rrz] = paraZup(prb,g) 
+% admm & pcg routine to solve for the optimal sparse weights Z
+% prb - is a "problem" object
+% g is probably gamma - the regularization factor.
 
 K = prb.K;
 w = prb.wp;

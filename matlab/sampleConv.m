@@ -1,3 +1,7 @@
+% look at and print some sample convolution weights from a pass of
+% the algorithms
+
+
 base = '/shared/users/dstrauss/sparseConv/datnow/miniOut_25_';
 
 maxWkr = 20;

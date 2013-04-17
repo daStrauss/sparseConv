@@ -1,3 +1,4 @@
+% compute some statistics if we chop up the data into smaller segments.
 nSamp = 20; % number of samples
 nw = 50; % size of patches
 nh = 10000; % size of sparse vector

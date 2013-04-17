@@ -1,3 +1,5 @@
+% look at output results from a multiple channel run.
+
 % base = '~/Documents/workspace/sparseConv/src/miniout_';
 % base = '/shared/users/dstrauss/sparseConv/src/miniOutMPK_';
 base = '/shared/users/dstrauss/sparseConv/src/plainOut_';

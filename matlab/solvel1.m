@@ -2,6 +2,7 @@ function s = solvel1(y,u,gmm)
 % s = solvel1(y,u)
 % solve the lasso problem
 % min (y-u*s)_2^2 + gmm*|s|
+% implemented using CVX
 cvxsltm = tic;
 N = size(u,2);
 cvx_begin quiet

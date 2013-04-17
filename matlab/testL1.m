@@ -1,4 +1,6 @@
 % need to write bonnaFide testing routine for l1 method
+% creates some results that can be directly compared to the results
+% of the python methods.
 
 p = 5;
 q = 10;

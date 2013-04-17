@@ -1,3 +1,5 @@
+% script to look at many of the output results 
+
 % base = '~/Documents/workspace/sparseConv/src/miniout_';
 % base = '/shared/users/dstrauss/sparseConv/src/miniOutMPK_';
 % base = '/shared/users/dstrauss/sparseConv/src/plainOut_';
