@@ -1,5 +1,7 @@
 function [prb w] = updateWeights(prb,wt);
 % w = updateWeights(prb,w)
+% return a least squares update for the weights- uses cg and
+% pipelined operators.
 
 wp = prb.wp;
 N = prb.nh;

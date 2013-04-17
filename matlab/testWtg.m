@@ -1,5 +1,6 @@
 % ok. the point of this script is to know how to update the weights
 % properly. need:
+% largely unfinished work.
 
 p = 5;
 q = 10;
