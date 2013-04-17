@@ -2,6 +2,9 @@
 Created on Dec 25, 2012
 
 @author: dstrauss
+
+inelegantly extends designer conv so that it also calculates the FFT
+
 '''
 
 from designerConv import convOperator as cvOp

@@ -4,7 +4,9 @@ Created on Dec 26, 2012
 @author: dstrauss
 
 creating some routines to make a convolutional net. especially one that works in parallel
+main routine for making things go.
 
+Deprecated code: use convNetPrime with 1 data set instead
 '''
 
 import scipy.io as spio

@@ -2,6 +2,9 @@
 Created on Dec 29, 2012
 
 @author: dstrauss
+
+method definition for doing CG solves with a pipelined matrix-vector multiplication
+
 '''
 
 import numpy as np

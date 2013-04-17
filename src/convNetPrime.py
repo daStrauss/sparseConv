@@ -4,7 +4,15 @@ Created on Dec 26, 2012
 @author: dstrauss
 
 creating some routines to make a convolutional net. especially one that works in parallel
-and this one is going to work over multiple channels
+
+Works in parallel
+Maps over a list of data. This means that it can handle looking for a sparse separation in 
+multiple channels simultaneously. This feature has direct applicability for the hypervelocity
+dust experiment data
+
+This code is more "flexible" than the standard convNet, but accomplishes the same goal.
+
+
 
 '''
 
@@ -108,7 +116,8 @@ def main():
             spio.savemat('miniOutMPK_' + repr(nProc) + '_' + repr(rk), outd)
         else:
             spio.savemat('plainOut_' + repr(nProc) + '_' + repr(rk), outd) 
-    
+            
+    ''' return these values if I chance to run this in an interactive Python shell'''
     return y,z,optl1,A,wt
     
     ''' for n iterations '''

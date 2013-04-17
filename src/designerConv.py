@@ -3,6 +3,8 @@ Created on Dec 24, 2012
 
 @author: dstrauss
 
+object that implements convolution with a prototype in matrix-vector multiplication form
+
 go ahead and build the designerConv script in Python
 use MPI4py to get things going in super parallel
 
