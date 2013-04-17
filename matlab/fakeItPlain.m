@@ -1,3 +1,6 @@
+% a few iterations of the cg methods to compare against what
+% happens in the python code
+
 % base = '/shared/users/dstrauss/sparseConv/outp/miniOut_';
 % base = '/shared/users/dstrauss/sparseConv/outp/plainOut_';
 % base = '/Users/dstrauss/Documents/workspace/sparseConv/src/miniOut_';

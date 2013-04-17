@@ -1,3 +1,6 @@
+% apply many of the convolutional learning methods so that 
+% they can be compared to what is going on in the python routines.
+
 % base = '/shared/users/dstrauss/sparseConv/outp/miniOut_';
 % base = '/shared/users/dstrauss/sparseConv/outp/plainOut_';
 % base = '/Users/dstrauss/Documents/workspace/sparseConv/src/miniOut_';
