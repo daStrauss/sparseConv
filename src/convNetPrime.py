@@ -19,14 +19,21 @@ limitations under the License.
 
 creating some routines to make a convolutional net. especially one that works in parallel
 
-Works in parallel
-Maps over a list of data. This means that it can handle looking for a sparse separation in 
-multiple channels simultaneously. This feature has direct applicability for the hypervelocity
-dust experiment data
+convNetPrime.py is a looped extension of convNet.py
+The main goal of this routine is to learn a set of weights, w, such that
+the weights can reproduce the data when convolved with a sparse vector. We solve for
+both the weights and the sparse vector iteratively, alternating between updates for the weights
+and updates for the sparse vector.
 
-This code is more "flexible" than the standard convNet, but accomplishes the same goal.
+The structure of this code allows it to handle multi-channel data. For example, if 3 channels of data
+are simultaneously collected, the script looks for a set of sparse vectors with similar sparsity patterns
+that convolve with an array of weights, separate weights for each channel, to reproduce the data.
 
-
+The algorithm is based on consensus optimization for the weights. Independent workers take a parsel of data
+solve for a sparse description vector and an appropriate set of weights. Each of these independent workers submits
+an opinion about the weights to a central aggregating processor. The aggregating processor finds an average set of
+normalized weights close to each of the individual sets. The updated global weights are shipped out and the cycle
+begins again.
 
 '''
 
@@ -68,7 +75,8 @@ def main():
     m = 50000 # size of data
     p = 25 # number of filters
     q = 300 # length of filters
-    
+
+            # dts is short for data source 
     if dts == 'plmr':
         rho = 1 # l1 internal parameter
         lmb = 0.005 # l1 weighting
@@ -83,16 +91,20 @@ def main():
     ''' load data, given rank '''
     y = getData(m,dts,ch,rank=rk)
     
-    ''' initialize weights '''    
+    ''' initialize weights, looping over the number of channels '''    
     wt = [weightInit(p,q,comm) for ix in xrange(ch)]
-    
+
+    '''create covolution objects of appropriate size for each of the channels '''
     A = [dtm(m,p,q,fourier=not plain) for ix in xrange(ch)]
         
     for Q in A:
         print Q.n
-            
+
+    ''' create a lasso-solver -- this version is designed to accept
+    ch channels '''
     optl1 = lasso(m,A[0].n,rho,lmb,ch)
-        
+
+    # update/create new weights    
     newWW = [weightsUpdate.weightsUpdate(m,p,q,xi) for ix in xrange(ch)]
     print newWW[0].m
     for WWl,wl in zip(newWW,wt):
@@ -100,18 +112,21 @@ def main():
     
     rrz = list()
     gap = list()
-    ''' begin loop '''
+    '''main learning iterations loop '''
     for itz in range(1000):
         ws = [WWl.wp for WWl in newWW]
         for Q,w in zip(A,wt) :
+            # insert new weights into each of the models
             Q.changeWeights(w)
         tm = time()
+        # solve for sparse descriptor vectors for all of the channels/models
         z = optl1.solveL1(y, A)
         rrz = optl1.rrz # .append(optl1.rrz.pop())
         gap = optl1.gap #.append(optl1.gap.pop())
         print 'rank ' + repr(rk) + ' of ' + repr(nProc) +  ' solved l1 itr: ' + repr(itz) + ' time: ' + repr(time()-tm)
         tm = time()
-        
+
+        # update the weights 
         if plain:
             wmx = [WL.updatePlain(yl, wtl, zl) for WL,yl,wtl,zl in zip(newWW,y,wt,z)]
         else:
@@ -134,22 +149,19 @@ def main():
     ''' return these values if I chance to run this in an interactive Python shell'''
     return y,z,optl1,A,wt
     
-    ''' for n iterations '''
-    
-    ''' calculate local weights '''
-    
-    ''' all reduce '''
-    
     
 def weightAgg(U,p,q,comm):
     ''' aggregation for weights '''
-    
+    # allocate space
     wmx = np.zeros((q,p))
-    
+
+    # combine weights from all of the individual processors
     wmx = comm.allreduce(U,wmx,op=MPI.SUM)
-    
+
+    # compute the mean
     wmx = wmx/comm.Get_size()
-    
+
+    # compute the closest normalized set.
     wt = np.zeros((q,p))
     
     for ix in xrange(p):
@@ -179,6 +191,9 @@ def weightInit(p,q,comm):
 def getData(m,dts,ch,rank=0):
     ''' simple function to grab data 
     returns zero mean, normalized data sample
+    This function is "processor aware" that is, when executed
+    on an MPI cluster, it will pull a piece of data that has been
+    designated for it based on its MPI rank.
     '''
     
 #    import matplotlib.pyplot as plt
@@ -205,6 +220,8 @@ def getData(m,dts,ch,rank=0):
     return y
     
 def testMain():
+    ''' I think that this is a script that makes sure that most of the objects function
+    properly, namely the convolution objects and their outputs '''
     import matplotlib.pyplot as plt
     y,z,optl1,A,wt = main()
     

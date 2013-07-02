@@ -38,6 +38,9 @@ import numpy as np
 import scipy.signal as sig
 
 class mapFFTConv(object):
+    ''' not sure why I built this class. It essentially
+    is only a class that will perform FFT-based convolution, which
+    may or may not be wise depending on the size of the objects '''
     def __init__(self,slz):
         self.slz = slz
     def __call__(self,a):
@@ -46,6 +49,14 @@ class mapFFTConv(object):
     
     
 class dtm(object):
+    ''' data model (dtm) class
+    initialize with model parameters, m,p,q which dictate 
+    m = size of data
+    p = # number of filters
+    q = # length of filters
+    fourier is a switch about whether to include a fourier transform
+    dictionary or not.
+    '''
     def __init__(self,m,p,q,fourier=True):
         self.m = m
         self.p = p
@@ -58,6 +69,7 @@ class dtm(object):
                 
     
     def changeWeights(self,wn):
+        ''' basic routine to change the weights in the model '''
         assert(wn.shape[0] == self.q)
         if self.p > 1:
             assert(wn.shape[1] == self.p)
@@ -85,6 +97,7 @@ class dtm(object):
     def mtxT(self,y):
         ''' adjoint multiplication operator '''
         x = list()
+        # accomplish "adjoint" multiplication through flipped-weight convolution
         for wl in self.w.T:
             x.append(sig.fftconvolve(y,np.flipud(wl.flatten()),'same'))    
 
@@ -97,6 +110,7 @@ class dtm(object):
     
         
 def test():
+    ''' a testing routine to make sure that these objects behave as I expect '''
     import convFourier
     import time
     import matplotlib.pyplot as plt
